@@ -1,0 +1,13 @@
+{
+  "name": "MennicaXD",
+  "version": "1.0.0",
+  "description": "Przykładowy projekt mennicy",
+  "main": "index.js",
+  "repository": "https://github.com/HevyRPG/MennicaXD",
+  "author": "MF,BS,TM",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "be-dev": "node src/backend/index.js"
+  }
+}
