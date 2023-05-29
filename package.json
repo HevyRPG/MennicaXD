@@ -8,6 +8,11 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "be-dev": "node src/backend/index.js"
+    "be-dev": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "mssql": "^9.1.1",
+    "node-fetch": "^3.3.1"
   }
 }
