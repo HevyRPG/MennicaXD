@@ -16,6 +16,7 @@ const config = {
     }
 };
 
+
 async function getProducts(type = null) {
     const pool = new ConnectionPool(config);
     await pool.connect();
@@ -25,6 +26,7 @@ async function getProducts(type = null) {
     FROM Products
     WHERE (@type IS NULL OR Type = @type)
   `;
+
     const result = await pool.request()
         .input('type', sql.NVarChar, type)
         .query(query);
@@ -32,6 +34,7 @@ async function getProducts(type = null) {
     pool.close();
     return result.recordset.map(record => new ProductModel(record));
 }
+
 
 async function placeOrder(model) {
     const pool = new ConnectionPool(config);

@@ -2,14 +2,26 @@ const sql = require('mssql');
 const { Currency } = require('./Models/Currency');
 
 const config = {
-    server: '51.38.135.127,49170',
-    database: 'Mennica',
-    user: 'sa',
-    password: 'Nie!Mam.Pomyslu#',
+    server: '<your-server>',
+    database: '<your-database>',
+    user: '<your-username>',
+    password: '<your-password>',
     options: {
         trustedConnection: false
     }
 };
+
+async function connectToDatabase() {
+    try {
+        await sql.connect(config);
+        console.log('Connected to the database');
+        // Perform database operations here
+    } catch (error) {
+        console.error('Error connecting to the database:', error);
+    }
+}
+
+connectToDatabase();
 
 async function addToCart(item) {
     try {

@@ -22,89 +22,89 @@ app.get('/test', (req, res) => {
 
 // Endpoint GET /test/curr
 app.get('/test/curr', (req, res) => {
-    const currency = UserLogin.SaveCurrency();
+    const currency = UserLogin.saveCurrency();
     res.send(currency);
 });
 
 // Endpoint POST /user/create
 app.post('/user/create', (req, res) => {
     const model = req.body;
-    const result = UserLogin.CreateUser(model);
+    const result = UserLogin.createUser(model);
     res.send(result);
 });
 
 // Endpoint POST /user/login
 app.post('/user/login', (req, res) => {
     const model = req.body;
-    const result = UserLogin.LoginUser(model);
+    const result = UserLogin.loginUser(model);
     res.send(result);
 });
 
 // Endpoint POST /user/update
 app.post('/user/update', (req, res) => {
     const model = req.body;
-    const result = UserLogin.UpdateUser(model);
+    const result = UserLogin.updateUser(model);
     res.send(result);
 });
 
 // Endpoint GET /products/:type
 app.get('/products/:type', (req, res) => {
     const type = req.params.type;
-    const products = Product.GetProducts(type);
+    const products = Product.getProducts(type);
     res.send(products);
 });
 
 // Endpoint GET /products
 app.get('/products', (req, res) => {
-    const products = Product.GetProducts();
+    const products = Product.getProducts();
     res.send(products);
 });
 
 // Endpoint POST /cart/add
 app.post('/cart/add', (req, res) => {
     const model = req.body;
-    Cart.AddToCart(model);
+    Cart.addToCart(model);
     res.send('Item added to cart');
 });
 
 // Endpoint POST /cart/remove
 app.post('/cart/remove', (req, res) => {
     const model = req.body;
-    Cart.RemoveFromCart(model);
+    Cart.removeFromCart(model);
     res.send('Item removed from cart');
 });
 
 // Endpoint GET /cart/:UserId
 app.get('/cart/:UserId', (req, res) => {
     const userId = req.params.UserId;
-    const cartItems = Cart.GetCartItems(userId);
+    const cartItems = Cart.getCartItems(userId);
     res.send(cartItems);
 });
 
 // Endpoint POST /order/placeOrder
 app.post('/order/placeOrder', (req, res) => {
     const model = req.body;
-    Product.PlaceOrder(model);
+    Product.placeOrder(model);
     res.send('Order placed');
 });
 
 // Endpoint GET /user/history/:UserId
 app.get('/user/history/:UserId', (req, res) => {
     const userId = req.params.UserId;
-    const orderHistory = Product.GetOrderHistory(userId);
+    const orderHistory = Product.getOrderHistory(userId);
     res.send(orderHistory);
 });
 
 // Endpoint POST /pay/:UserId/:OrderId
 app.post('/pay/:UserId/:OrderId', (req, res) => {
     const userId = req.params.UserId;
-    const orderId = req.params.OrderId;
+    const orderId = req.params.orderId;
     res.send('Order paid');
 });
 
 // Endpoint GET /currency
 app.get('/currency', (req, res) => {
-    const currency = Cart.ReturnCurrency();
+    const currency = Cart.returnCurrency();
     res.send(currency);
 });
 

@@ -7,12 +7,11 @@
   "author": "MF,BS,TM",
   "license": "UNLICENSED",
   "private": true,
-  "scripts": {
-    "be-dev": "node src/index.js"
-  },
+  "scripts": {},
   "dependencies": {
     "express": "^4.18.2",
     "mssql": "^9.1.1",
-    "node-fetch": "^3.3.1"
+    "node-fetch": "^3.3.1",
+    "tedious": "^16.1.0"
   }
 }
