@@ -9,9 +9,5 @@
   "private": true,
   "scripts": {},
   "dependencies": {
-    "express": "^4.18.2",
-    "mssql": "^9.1.1",
-    "node-fetch": "^3.3.1",
-    "tedious": "^16.1.0"
   }
 }
