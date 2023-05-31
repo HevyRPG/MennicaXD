@@ -120,7 +120,7 @@ app.post('/zamowienie', (req, res) => {
 });
 
 // Endpoint dla żądania historii zamówień
-app.get('/historia-zamowien', (req, res) => {
+app.get('/historia-zamowien/idklienta', (req, res) => {
     res.send(historiaZamowien);
     //3,4 .punkt
 });
@@ -194,5 +194,5 @@ app.get('/produkty', (req, res) => {
 
 // Start serwera
 app.listen(3001, () => {
-    console.log('Serwer nasłuchuje na porcie 3000...');
+    console.log('Serwer nasłuchuje na porcie 3001...');
 });
