@@ -4,89 +4,15 @@ app.use(express.json());
 
 let koszyk = []; // Przechowuje produkty w koszyku
 let historiaZamowien = []; // Przechowuje historię zamówień
+let users = []; // Przechowuje zarejestrowanych użytkowników
 
-// Endpoint dla dodawania produktu do koszyka
-app.post('/koszyk', (req, res) => {
-    const { produkt } = req.body;
-    koszyk.push(produkt);
-    res.send('Produkt został dodany do koszyka.');
-});
 
-// Endpoint dla składania zamówienia
-app.post('/zamowienie', (req, res) => {
-    const { miasto, kodPocztowy, ulica, numer, imie, nazwisko, platnosc } = req.body;
-
-    if (koszyk.length === 0) {
-        res.status(400).send('Koszyk jest pusty. Nie można złożyć zamówienia.');
-    } else if (!miasto || !kodPocztowy || !ulica || !numer || !imie || !nazwisko || !platnosc) {
-        res.status(400).send('Nie wszystkie wymagane dane zostały podane.');
-    } else {
-        const zamowienie = {
-            numer: historiaZamowien.length + 1,
-            data: new Date(),
-            cena: obliczCeneZamowienia(),
-            produkty: [...koszyk],
-            adres: {
-                miasto,
-                kodPocztowy,
-                ulica,
-                numer
-            },
-            klient: {
-                imie,
-                nazwisko
-            },
-            platnosc
-        };
-
-        // Tutaj można dodać dodatkową logikę przetwarzania zamówienia, np. zapis do bazy danych
-
-        // Dodaj zamówienie do historii zamówień
-        historiaZamowien.push(zamowienie);
-
-        let wiadomosc = 'Zamówienie zostało złożone.' + "\r\n";
-
-        if (platnosc === 'przelew') {
-            // Logika dla tradycyjnego przelewu
-            wiadomosc += 'Wykonaj przelew na numer konta: XYZ.' + "\r\n";
-        } else if (platnosc === 'payu') {
-            // Logika dla płatności za pomocą PayU
-            wiadomosc += ' Zapłać za zamówienie za pomocą PayU.' + "\r\n";
-        }
-
-        // Wyczyść koszyk po złożeniu zamówienia
-        koszyk = [];
-
-        wiadomosc +='Koszyk został wyczyszczony'
-
-        res.send(wiadomosc);
-    }
-});
-
-// Endpoint dla przeglądania historii zamówień
-app.get('/historia', (req, res) => {
-    res.send(historiaZamowien);
-});
-
-// Endpoint dla ponownego zamówienia
-app.post('/ponowne-zamowienie/:numerZamowienia', (req, res) => {
-    const numerZamowienia = parseInt(req.params.numerZamowienia);
-
-    const zamowienie = historiaZamowien.find(zam => zam.numer === numerZamowienia);
-
-    if (!zamowienie) {
-        res.status(402).send('Nie znaleziono zamówienia o podanym numerze.');
-    } else {
-        // Dodaj produkty zamówienia do koszyka
-        koszyk = [...zamowienie.produkty];
-
-        res.send('Produkty zamówienia zostały dodane do koszyka.');
-    }
-});
-
-app.listen(3001, () => {
-    console.log('Aplikacja działa na porcie 3000!');
-});
+const produkty = [
+    { produktId: 1, nazwa: 'Moneta złota', typ: 'złoto', rodzaj: 'monety', dostepny: true },
+    { produktId: 2, nazwa: 'Moneta srebrna', typ: 'srebro', rodzaj: 'monety', dostepny: true },
+    { produktId: 3, nazwa: 'Sztabka złota', typ: 'złoto', rodzaj: 'sztabki', dostepny: true },
+    { produktId: 4, nazwa: 'Sztabka srebrna', typ: 'srebro', rodzaj: 'sztabki', dostepny: true },
+];
 
 // Funkcja do obliczania całkowitej ceny zamówienia
 function obliczCeneZamowienia() {
@@ -98,3 +24,175 @@ function obliczCeneZamowienia() {
 
     return sumaCen;
 }
+
+// Funkcja do weryfikacji dostępności produktu
+function sprawdzDostepnoscProduktu(produktId) {
+    const produkt = produkty.find(p => p.id === produktId);
+    return produkt && produkt.dostepny;
+}
+
+// Endpoint dla dodawania produktu do koszyka
+app.post('/koszyk', (req, res) => {
+    const { produktId, ilosc } = req.body;
+
+    const produkt = produkty.find(p => p.id === produktId);
+
+    if (!produkt) {
+        res.status(404).send('Produkt o podanym ID nie istnieje.');
+    } else if (!produkt.dostepny) {
+        res.status(400).send('Produkt jest niedostępny.');
+    } else {
+        const pozycjaWKoszyku = koszyk.find(p => p.produktId === produktId);
+
+        if (pozycjaWKoszyku) {
+            pozycjaWKoszyku.ilosc += ilosc;
+        } else {
+            koszyk.push({ produktId, ilosc });
+        }
+
+        res.send('Produkt został dodany do koszyka.');
+    }
+});
+
+// Endpoint dla usuwania produktu z koszyka
+app.delete('/koszyk/:produktId', (req, res) => {
+    const { produktId } = req.params;
+
+    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(produktId));
+
+    if (!pozycjaWKoszyku) {
+        res.status(404).send('Produkt o podanym ID nie istnieje w koszyku.');
+    } else {
+        koszyk = koszyk.filter(p => p.produktId !== Number(produktId));
+        res.send('Produkt został usunięty z koszyka.');
+    }
+});
+
+// Endpoint dla aktualizacji ilości produktu w koszyku
+app.put('/koszyk/:produktId', (req, res) => {
+    const { produktId } = req.params;
+    const { ilosc } = req.body;
+
+    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(produktId));
+
+    if (!pozycjaWKoszyku) {
+        res.status(404).send('Produkt o podanym ID nie istnieje w koszyku.');
+    } else {
+        pozycjaWKoszyku.ilosc = ilosc;
+        res.send('Ilość produktu w koszyku została zaktualizowana.');
+    }
+});
+
+// Endpoint dla składania zamówienia
+app.post('/zamowienie', (req, res) => {
+    const { miasto, kodPocztowy, ulica, numerDomuMieszkania, imie, nazwisko, metodaPlatnosci } = req.body;
+
+    if (koszyk.length === 0) {
+        res.status(400).send('Koszyk jest pusty. Nie można złożyć zamówienia.');
+    } else {
+        const numerZamowienia = historiaZamowien.length + 1;
+        const cenaZamowienia = obliczCeneZamowienia();
+
+        const noweZamowienie = {
+            numer: numerZamowienia,
+            data: new Date().toISOString(),
+            cena: cenaZamowienia,
+            produkty: [...koszyk],
+            adres: {
+                miasto,
+                kodPocztowy,
+                ulica,
+                numerDomuMieszkania
+            },
+            daneKlienta: {
+                imie,
+                nazwisko
+            },
+            metodaPlatnosci
+        };
+        //2. Punkt
+        historiaZamowien.push(noweZamowienie);
+
+        koszyk = []; // Wyczyszczenie koszyka po złożeniu zamówienia
+
+        res.send('Zamówienie zostało złożone.');
+    }
+});
+
+// Endpoint dla żądania historii zamówień
+app.get('/historia-zamowien', (req, res) => {
+    res.send(historiaZamowien);
+    //3,4 .punkt
+});
+
+// Endpoint dla ponownego składania zamówienia na podstawie zamówienia historycznego
+app.post('/ponowne-zamowienie/:numerZamowienia', (req, res) => {
+    const { numerZamowienia } = req.params;
+
+    const zamowienie = historiaZamowien.find(zam => zam.numer === Number(numerZamowienia));
+
+    if (!zamowienie) {
+        res.status(404).send('Zamówienie o podanym numerze nie zostało odnalezione.');
+    } else {
+        for (const produkt of zamowienie.produkty) {
+            const dostepnoscProduktu = sprawdzDostepnoscProduktu(produkt.produktId);
+
+            if (dostepnoscProduktu) {
+                koszyk.push(produkt);
+            }
+        }
+
+        res.send('Nowe zamówienie zostało złożone na podstawie zamówienia historycznego.');
+    }
+});
+
+// Endpoint dla tworzenia konta użytkownika
+app.post('/konto', (req, res) => {
+    const { imie, nazwisko, dataUrodzenia, email, haslo } = req.body;
+
+    const nowyUzytkownik = {
+        imie,
+        nazwisko,
+        dataUrodzenia,
+        email,
+        haslo
+    };
+    //5 punk
+    users.push(nowyUzytkownik);
+    res.send('Konto zostało utworzone.');
+});
+
+// Endpoint dla logowania użytkownika //6.punkt
+app.post('/logowanie', (req, res) => {
+    const { email, haslo } = req.body;
+
+    const zalogowanyUzytkownik = users.find(user => user.email === email && user.haslo === haslo);
+
+    if (zalogowanyUzytkownik) {
+        res.send('Zalogowano pomyślnie.');
+    } else {
+        res.status(401).send('Błędne dane logowania.');
+    }
+});
+
+// Endpoint dla filtrowania dostępnego towaru
+app.get('/produkty', (req, res) => {
+    const { typ, rodzaj } = req.query;
+
+    let dostepneProdukty = produkty;
+
+    if (typ) {
+        dostepneProdukty = dostepneProdukty.filter(p => p.typ === typ);
+    }
+
+    if (rodzaj) {
+        dostepneProdukty = dostepneProdukty.filter(p => p.rodzaj === rodzaj);
+    }
+
+    res.send(dostepneProdukty);
+});
+
+// Start serwera
+app.listen(3001, () => {
+    console.log('Serwer nasłuchuje na porcie 3000...');
+});
