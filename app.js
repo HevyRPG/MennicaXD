@@ -182,17 +182,19 @@ app.post('/user/create', (req, res) => {
         });
 });
 // Endpoint dla logowania użytkownika //6.punkt
-app.post('/logowanie', (req, res) => {
-    const { email, haslo } = req.body;
+app.post('/user/login', (req, res) => {
+    const { Username, Password } = req.body;
 
-    const zalogowanyUzytkownik = users.find(user => user.email === email && user.haslo === haslo);
-
-    if (zalogowanyUzytkownik) {
-        res.send('Zalogowano pomyślnie.');
-    } else {
-        res.status(401).send('Błędne dane logowania.');
-    }
+    axios.post('https://localhost:60608/user/login', { Username, Password })
+        .then(response => {
+            res.status(200).json(response.data);
+        })
+        .catch(error => {
+            console.error('Error during login:', error.response.data);
+            res.sendStatus(500);
+        });
 });
+
 
 // Endpoint dla filtrowania dostępnego towaru
 app.get('/produkty', (req, res) => {
