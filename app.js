@@ -2,8 +2,18 @@ const axios = require('axios');
 const express = require('express');
 const bodyParser = require('body-parser');
 const sql = require('mssql');
+
 const app = express();
-app.use(express.json());
+const port = 3000;
+process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+
+
+// Start serwera
+
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+});
+app.use(bodyParser.json());
 
 let koszyk = []; // Przechowuje produkty w koszyku
 let historiaZamowien = []; // Przechowuje historię zamówień
@@ -171,7 +181,6 @@ app.post('/user/create', (req, res) => {
             res.sendStatus(500);
         });
 });
-
 // Endpoint dla logowania użytkownika //6.punkt
 app.post('/logowanie', (req, res) => {
     const { email, haslo } = req.body;
@@ -202,7 +211,4 @@ app.get('/produkty', (req, res) => {
     res.send(dostepneProdukty);
 });
 
-// Start serwera
-app.listen(3001, () => {
-    console.log('Serwer nasłuchuje na porcie 3001...');
-});
+
