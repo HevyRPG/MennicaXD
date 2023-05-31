@@ -1,4 +1,7 @@
+const axios = require('axios');
 const express = require('express');
+const bodyParser = require('body-parser');
+const sql = require('mssql');
 const app = express();
 app.use(express.json());
 
@@ -146,20 +149,27 @@ app.post('/ponowne-zamowienie/:numerZamowienia', (req, res) => {
     }
 });
 
-// Endpoint dla tworzenia konta użytkownika
-app.post('/konto', (req, res) => {
-    const { imie, nazwisko, dataUrodzenia, email, haslo } = req.body;
+// Endpoint dla tworzenia konta użytkownika DONEEE
+app.post('/user/create', (req, res) => {
+    const { Username, Password, Email, BirthDate, Name, Surname } = req.body;
 
-    const nowyUzytkownik = {
-        imie,
-        nazwisko,
-        dataUrodzenia,
-        email,
-        haslo
+    const data = {
+        Username,
+        Password,
+        Email,
+        BirthDate,
+        Name,
+        Surname
     };
-    //5 punk
-    users.push(nowyUzytkownik);
-    res.send('Konto zostało utworzone.');
+
+    axios.post('https://localhost:60608/user/create', data)
+        .then(response => {
+            res.status(200).json(response.data);
+        })
+        .catch(error => {
+            console.error('Error creating user:', error.response.data);
+            res.sendStatus(500);
+        });
 });
 
 // Endpoint dla logowania użytkownika //6.punkt
