@@ -181,7 +181,7 @@ app.post('/user/create', (req, res) => {
             res.sendStatus(500);
         });
 });
-// Endpoint dla logowania użytkownika //6.punkt
+// Endpoint dla logowania użytkownika // DONEE
 app.post('/user/login', (req, res) => {
     const { Username, Password } = req.body;
 
@@ -191,6 +191,22 @@ app.post('/user/login', (req, res) => {
         })
         .catch(error => {
             console.error('Error during login:', error.response.data);
+            res.sendStatus(500);
+        });
+});
+
+
+// Endpoint do modyfikacji danych
+app.post('/user/update', (req, res) => {
+    const { Name, Birthdate, Surname, UserID } = req.body;
+
+    axios.post('https://localhost:60608/user/update', { Name, Birthdate, Surname, UserID })
+        .then(response => {
+            // Handle the successful update response from the API if needed
+            res.sendStatus(200);
+        })
+        .catch(error => {
+            console.error('Error updating user:', error.response.data);
             res.sendStatus(500);
         });
 });
