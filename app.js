@@ -105,8 +105,8 @@ app.put('/cart/update/:productId', (req, res) => {
 });
 
 // Endpoint dla składania zamówienia
-app.post('/zamowienie', (req, res) => {
-    const { miasto, kodPocztowy, ulica, numerDomuMieszkania, imie, nazwisko, metodaPlatnosci } = req.body;
+app.post('/zamowienie', async (req, res) => {
+    const { miasto, kodPocztowy, ulica, numer, imie, nazwisko, metodaPlatnosci } = req.body;
 
     if (koszyk.length === 0) {
         res.status(400).send('Koszyk jest pusty. Nie można złożyć zamówienia.');
@@ -123,7 +123,7 @@ app.post('/zamowienie', (req, res) => {
                 miasto,
                 kodPocztowy,
                 ulica,
-                numerDomuMieszkania
+                numer
             },
             daneKlienta: {
                 imie,
@@ -131,19 +131,59 @@ app.post('/zamowienie', (req, res) => {
             },
             metodaPlatnosci
         };
-        //2. Punkt
-        historiaZamowien.push(noweZamowienie);
 
-        koszyk = []; // Wyczyszczenie koszyka po złożeniu zamówienia
+        // Assuming your external API endpoint is '/api/placeOrder'
+        const placeOrderUrl = 'https://localhost:60608/order/placeOrder';
 
-        res.send('Zamówienie zostało złożone.');
+        const placeOrderPayload = {
+            CustomerOrder: {
+                UserId: 1, // Replace with the actual user ID
+                ShippingCity: miasto,
+                ShippingPostalNumber: kodPocztowy,
+                ShippingCountry: 'Your Country', // Replace with the actual shipping country
+                ShippingAdress: ulica + ' ' + numer,
+                PaymentId: 1, // Replace with the actual payment ID
+                ShippingMethodId: 1, // Replace with the actual shipping method ID
+                Price: 10.1  //cenaZamowienia
+            },
+            CartItemModel: koszyk.map((item) => ({
+                ProductId: 1, //item.productId,
+                CustomerId: 1, // Replace with the actual customer ID
+                Qty: 1, //item.quantity,
+                CurrencyId: 200// Replace with the actual currency ID
+            }))
+        };
+
+        // try {
+            // Make a POST request to the external API
+            await axios.post(placeOrderUrl, placeOrderPayload);
+
+            historiaZamowien.push(noweZamowienie);
+            koszyk = []; // Wyczyszczenie koszyka po złożeniu zamówienia
+
+            res.send('Zamówienie zostało złożone.');
+        // } catch (error) {
+        //     console.error('Błąd podczas składania zamówienia:', error);
+        //     res.status(500).send('Wystąpił błąd podczas składania zamówienia.');
+        // }
     }
 });
 
 // Endpoint dla żądania historii zamówień
-app.get('/historia-zamowien/idklienta', (req, res) => {
-    res.send(historiaZamowien);
-    //3,4 .punkt
+app.get('/historia-zamowien/:idklienta', async (req, res) => {
+    const userId = req.params.idklienta;
+    const apiUrl = `https://localhost:60608/user/history/${userId}`;
+
+    try {
+        // Make a GET request to the external API
+        const response = await axios.get(apiUrl);
+        const historiaZamowien = response.data;
+
+        res.send(historiaZamowien);
+    } catch (error) {
+        console.error('Błąd podczas pobierania historii zamówień:', error);
+        res.status(500).send('Wystąpił błąd podczas pobierania historii zamówień.');
+    }
 });
 
 // Endpoint dla ponownego składania zamówienia na podstawie zamówienia historycznego
