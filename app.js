@@ -45,48 +45,56 @@ function sprawdzDostepnoscProduktu(produktId) {
 }
 
 // Endpoint dla dodawania produktu do koszyka
-app.post('/koszyk', (req, res) => {
-    const { produktId, ilosc } = req.body;
+app.post('/cart/add', (req, res) => {
+    const { productId, productQty } = req.body;
 
-    const produkt = produkty.find(p => p.id === produktId);
+    axios.get('https://localhost:60608/products')
+        .then(response => {
+            const products = response.data;
+            const product = products.find(p => p.id === productId);
 
-    if (!produkt) {
-        res.status(404).send('Produkt o podanym ID nie istnieje.');
-    } else if (!produkt.dostepny) {
-        res.status(400).send('Produkt jest niedostępny.');
-    } else {
-        const pozycjaWKoszyku = koszyk.find(p => p.produktId === produktId);
+            if (!product) {
+                res.status(404).send('Produkt o podanym ID nie istnieje.');
+            } else if (!product.inStock) {
+                res.status(400).send('Produkt jest niedostępny.');
+            } else {
+                const pozycjaWKoszyku = koszyk.find(p => p.produktId === productId);
 
-        if (pozycjaWKoszyku) {
-            pozycjaWKoszyku.ilosc += ilosc;
-        } else {
-            koszyk.push({ produktId, ilosc });
-        }
+                if (pozycjaWKoszyku) {
+                    pozycjaWKoszyku.ilosc += productQty;
+                } else {
+                    koszyk.push({ produktId: productId, ilosc: productQty });
+                }
 
-        res.send('Produkt został dodany do koszyka.');
-    }
+                res.send('Produkt został dodany do koszyka.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching products:', error.response.data);
+            res.sendStatus(500);
+        });
 });
 
 // Endpoint dla usuwania produktu z koszyka
-app.delete('/koszyk/:produktId', (req, res) => {
-    const { produktId } = req.params;
+app.delete('/cart/remove/:productId', (req, res) => {
+    const { productId } = req.params;
 
-    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(produktId));
+    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(productId));
 
     if (!pozycjaWKoszyku) {
         res.status(404).send('Produkt o podanym ID nie istnieje w koszyku.');
     } else {
-        koszyk = koszyk.filter(p => p.produktId !== Number(produktId));
+        koszyk = koszyk.filter(p => p.produktId !== Number(productId));
         res.send('Produkt został usunięty z koszyka.');
     }
 });
 
 // Endpoint dla aktualizacji ilości produktu w koszyku
-app.put('/koszyk/:produktId', (req, res) => {
-    const { produktId } = req.params;
+app.put('/cart/update/:productId', (req, res) => {
+    const { productId } = req.params;
     const { ilosc } = req.body;
 
-    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(produktId));
+    const pozycjaWKoszyku = koszyk.find(p => p.produktId === Number(productId));
 
     if (!pozycjaWKoszyku) {
         res.status(404).send('Produkt o podanym ID nie istnieje w koszyku.');
@@ -196,11 +204,11 @@ app.post('/user/login', (req, res) => {
 });
 
 
-// Endpoint do modyfikacji danych
+// Endpoint do modyfikacji danych DONEE
 app.post('/user/update', (req, res) => {
-    const { Name, Birthdate, Surname, UserID } = req.body;
+    const { Name, BirthDate, Surname, UserId } = req.body;
 
-    axios.post('https://localhost:60608/user/update', { Name, Birthdate, Surname, UserID })
+    axios.post('https://localhost:60608/user/update', { Name, BirthDate, Surname, UserId })
         .then(response => {
             // Handle the successful update response from the API if needed
             res.sendStatus(200);
@@ -212,21 +220,18 @@ app.post('/user/update', (req, res) => {
 });
 
 
-// Endpoint dla filtrowania dostępnego towaru
-app.get('/produkty', (req, res) => {
-    const { typ, rodzaj } = req.query;
+// Endpoint dla filtrowania dostępnego towaru DONEE
+app.get('/products/:type', (req, res) => {
+    const { type } = req.params;
 
-    let dostepneProdukty = produkty;
-
-    if (typ) {
-        dostepneProdukty = dostepneProdukty.filter(p => p.typ === typ);
-    }
-
-    if (rodzaj) {
-        dostepneProdukty = dostepneProdukty.filter(p => p.rodzaj === rodzaj);
-    }
-
-    res.send(dostepneProdukty);
+    axios.get(`https://localhost:60608/products/${type}`)
+        .then(response => {
+            // Handle the successful response from the API if needed
+            res.status(200).json(response.data);
+        })
+        .catch(error => {
+            console.error('Error fetching currency:', error.response.data);
+            res.sendStatus(500);
+        });
 });
-
 
