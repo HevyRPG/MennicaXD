@@ -187,7 +187,7 @@ app.get('/historia-zamowien/:idklienta', async (req, res) => {
 });
 
 // Endpoint dla ponownego składania zamówienia na podstawie zamówienia historycznego
-app.post('/ponowne-zamowienie/:numerZamowienia', (req, res) => {
+app.post('/ponowne-zamowienie/:numerZamowienia', async (req, res) => {
     const { numerZamowienia } = req.params;
 
     const zamowienie = historiaZamowien.find(zam => zam.numer === Number(numerZamowienia));
@@ -195,15 +195,52 @@ app.post('/ponowne-zamowienie/:numerZamowienia', (req, res) => {
     if (!zamowienie) {
         res.status(404).send('Zamówienie o podanym numerze nie zostało odnalezione.');
     } else {
+        const noweZamowienie = { numer: generujNumerZamowienia(), produkty: [] };
+
         for (const produkt of zamowienie.produkty) {
             const dostepnoscProduktu = sprawdzDostepnoscProduktu(produkt.produktId);
 
             if (dostepnoscProduktu) {
-                koszyk.push(produkt);
+                noweZamowienie.produkty.push(produkt);
             }
         }
 
-        res.send('Nowe zamówienie zostało złożone na podstawie zamówienia historycznego.');
+        if (noweZamowienie.produkty.length > 0) {
+            try {
+                // Assuming your external API endpoint is '/api/placeOrder'
+                const placeOrderUrl = 'https://localhost:60608/order/placeOrder';
+
+                const placeOrderPayload = {
+                    CustomerOrder: {
+                        UserId: 1, // Replace with the actual user ID
+                        ShippingCity: zamowienie.adres.miasto,
+                        ShippingPostalNumber: zamowienie.adres.kodPocztowy,
+                        ShippingCountry: 'Your Country', // Replace with the actual shipping country
+                        ShippingAdress: zamowienie.adres.ulica + ' ' + zamowienie.adres.numer,
+                        PaymentId: 1, // Replace with the actual payment ID
+                        ShippingMethodId: 1, // Replace with the actual shipping method ID
+                        Price: zamowienie.cena
+                    },
+                    CartItemModel: noweZamowienie.produkty.map((item) => ({
+                        ProductId: item.productId,
+                        CustomerId: 1, // Replace with the actual customer ID
+                        Qty: item.quantity,
+                        CurrencyId: 200 // Replace with the actual currency ID
+                    }))
+                };
+
+                // Make a POST request to the external API
+                await axios.post(placeOrderUrl, placeOrderPayload);
+
+                historiaZamowien.push(noweZamowienie);
+                res.send('Nowe zamówienie zostało złożone na podstawie zamówienia historycznego.');
+            } catch (error) {
+                console.error('Błąd podczas składania zamówienia:', error);
+                res.status(500).send('Wystąpił błąd podczas składania zamówienia.');
+            }
+        } else {
+            res.status(400).send('Produkty z zamówienia historycznego są niedostępne.');
+        }
     }
 });
 
